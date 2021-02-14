@@ -1,0 +1,12 @@
+
+bow-girl-movement.png
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+bowGirl
+  rotate: false
+  xy: 0, 0
+  size: 128, 256
+  orig: 128, 256
+  offset: 0, 0
+  index: -1

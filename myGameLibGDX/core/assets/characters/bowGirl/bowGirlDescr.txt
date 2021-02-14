@@ -1,0 +1,10 @@
+16*32
+walk down: 0,0; 16,0; 32,0
+walk down-left: 48,0; 64,0; 80,0;
+walk up: 0,32; 16,32; 32,32
+walk down-right: 48,32; 64,32; 80,32
+walk left: 0,64; 16,64; 32,64
+walk up-left: 48,64; 64,64; 80,64
+walk right: 0,96; 16,96; 32,96
+walk up-right: 48,96; 64,96; 80,96
+standing: 2nd of each movement
