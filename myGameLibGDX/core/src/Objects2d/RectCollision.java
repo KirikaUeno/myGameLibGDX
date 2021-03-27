@@ -1,6 +1,6 @@
 package Objects2d;
 
-import Game.PlayField;
+import Game.Game;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.math.Rectangle;
@@ -16,10 +16,10 @@ public class RectCollision {
         Rectangle rect = ((RectangleMapObject)object).getRectangle();
 
         bdef.type = BodyDef.BodyType.StaticBody;
-        bdef.position.set((rect.getX()+rect.width/2)/ PlayField.PPM,(rect.getY()+rect.height/2)/PlayField.PPM);
+        bdef.position.set((rect.getX()+rect.width/2)/ Game.PPM,(rect.getY()+rect.height/2)/ Game.PPM);
         body = world.createBody(bdef);
 
-        shape.setAsBox(rect.width/2/PlayField.PPM,rect.height/2/PlayField.PPM);
+        shape.setAsBox(rect.width/2/ Game.PPM,rect.height/2/ Game.PPM);
         fdef.shape = shape;
         body.createFixture(fdef);
     }

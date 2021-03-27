@@ -1,6 +1,6 @@
 package Sprites;
 
-import Game.PlayField;
+import Game.Game;
 import Screens.PlayScreen;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -9,7 +9,11 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
 
+import java.util.HashMap;
+
 public class Player extends Sprite {
+    private String name = "player";
+
     private final World world;
     public Body b2Body;
     public float velocity =2;
@@ -17,26 +21,27 @@ public class Player extends Sprite {
     public enum State {WALKING,STANDING,RUNNING}
     public State currentState;
     public State previousState;
-    private final TextureRegion bowGirlStandLeft;
-    private final TextureRegion bowGirlStandDown;
-    private final TextureRegion bowGirlStandUp;
-    private final TextureRegion bowGirlStandUpLeft;
-    private final TextureRegion bowGirlStandDownLeft;
-    private final Animation<TextureRegion> bowGirlWalkLeft;
-    private final Animation<TextureRegion> bowGirlWalkDown;
-    private final Animation<TextureRegion> bowGirlWalkUp;
-    private final Animation<TextureRegion> bowGirlWalkUpLeft;
-    private final Animation<TextureRegion> bowGirlWalkDownLeft;
-    private final Animation<TextureRegion> bowGirlRunLeft;
-    private final Animation<TextureRegion> bowGirlRunDown;
-    private final Animation<TextureRegion> bowGirlRunUp;
-    private final Animation<TextureRegion> bowGirlRunUpLeft;
-    private final Animation<TextureRegion> bowGirlRunDownLeft;
+    private TextureRegion bowGirlStandLeft;
+    private TextureRegion bowGirlStandDown;
+    private TextureRegion bowGirlStandUp;
+    private TextureRegion bowGirlStandUpLeft;
+    private TextureRegion bowGirlStandDownLeft;
+    private Animation<TextureRegion> bowGirlWalkLeft;
+    private Animation<TextureRegion> bowGirlWalkDown;
+    private Animation<TextureRegion> bowGirlWalkUp;
+    private Animation<TextureRegion> bowGirlWalkUpLeft;
+    private Animation<TextureRegion> bowGirlWalkDownLeft;
+    private Animation<TextureRegion> bowGirlRunLeft;
+    private Animation<TextureRegion> bowGirlRunDown;
+    private Animation<TextureRegion> bowGirlRunUp;
+    private Animation<TextureRegion> bowGirlRunUpLeft;
+    private Animation<TextureRegion> bowGirlRunDownLeft;
     private float stateTimer;
     private enum Direction {UP,LEFT,DOWN,RIGHT,UP_LEFT,UP_RIGHT,DOWN_LEFT,DOWN_RIGHT}
     private boolean isLeft;
     private Direction direction;
     private Direction previousDirection;
+    private boolean isMainPlayer = true;
 
     public Player(PlayScreen screen){
         super(screen.getAtlas().findRegion("bowGirl"));
@@ -50,6 +55,53 @@ public class Player extends Sprite {
         previousDirection = direction;
         isLeft=true;
 
+        defineAnimations();
+
+        setBounds(0,0,16/ Game.PPM,32/ Game.PPM);
+    }
+
+    public Player(PlayScreen screen, HashMap<String,Object> map){
+        super(screen.getAtlas().findRegion("bowGirl"));
+        this.world = screen.getWorld();
+        definePlayer();
+
+        stateTimer = 0;
+        isLeft=true;
+
+        direction = Direction.valueOf((String)map.get("direction"));
+        b2Body.setTransform(Float.parseFloat((String)map.get("posX")),Float.parseFloat((String)map.get("posY")),0);
+        System.out.println((String)map.get("posX"));
+        System.out.println((String)map.get("posY"));
+        System.out.println(b2Body.getPosition().toString());
+        currentState = State.valueOf((String)map.get("state"));
+        previousState = currentState;
+        previousDirection = direction;
+        if(direction==Direction.DOWN_RIGHT||direction==Direction.UP_RIGHT||direction==Direction.RIGHT) isLeft=false;
+
+        defineAnimations();
+
+        setBounds(0,0,16/ Game.PPM,32/ Game.PPM);
+
+        isMainPlayer = false;
+    }
+
+    private void definePlayer(){
+        BodyDef bDef = new BodyDef();
+        bDef.position.set(350/ Game.PPM,100/ Game.PPM);
+        bDef.type = BodyDef.BodyType.DynamicBody;
+
+        b2Body = world.createBody(bDef);
+
+        FixtureDef fDef = new FixtureDef();
+        PolygonShape shape = new PolygonShape();
+        Vector2 ve = new Vector2(0,-8/ Game.PPM);
+        shape.setAsBox(8/ Game.PPM,8/ Game.PPM,ve,0);
+        fDef.shape=shape;
+        fDef.friction=0;
+        b2Body.createFixture(fDef);
+    }
+
+    private void defineAnimations(){
         Array<TextureRegion> frames = new Array<>();
         for(int i=0;i<3;i++){
             frames.add(new TextureRegion(getTexture(),i*16,0,16,32));
@@ -87,24 +139,6 @@ public class Player extends Sprite {
         bowGirlStandUp = new TextureRegion(getTexture(),16,32,16,32);
         bowGirlStandLeft = new TextureRegion(getTexture(),16,64,16,32);
         bowGirlStandUpLeft = new TextureRegion(getTexture(),64,64,16,32);
-        setBounds(0,0,16/PlayField.PPM,32/PlayField.PPM);
-    }
-
-    public void definePlayer(){
-        BodyDef bDef = new BodyDef();
-        bDef.position.set(350/ PlayField.PPM,100/PlayField.PPM);
-        bDef.type = BodyDef.BodyType.DynamicBody;
-
-        b2Body = world.createBody(bDef);
-
-        FixtureDef fDef = new FixtureDef();
-        PolygonShape shape = new PolygonShape();
-        Vector2 ve = new Vector2(0,-8/PlayField.PPM);
-        shape.setAsBox(8/PlayField.PPM,8/PlayField.PPM,ve,0);
-        fDef.shape=shape;
-        fDef.friction=0;
-        b2Body.createFixture(fDef);
-        System.out.println(fDef.friction);
     }
 
     public void update(float dt){
@@ -118,14 +152,15 @@ public class Player extends Sprite {
         }
         previousState = currentState;
         previousDirection=direction;
+        if(!isMainPlayer) System.out.println(b2Body.getPosition().toString());
     }
 
     public TextureRegion getFrame(float dt){
-        currentState = getState();
+        if(isMainPlayer) currentState = getState();
         TextureRegion region = bowGirlStandDown;
         switch (currentState){
             case WALKING:
-                direction=getDirection();
+                if(isMainPlayer) direction=getDirection();
                 switch (direction){
                     case UP:
                         region = bowGirlWalkUp.getKeyFrame(stateTimer,true);
@@ -148,7 +183,7 @@ public class Player extends Sprite {
                 }
                 break;
             case RUNNING:
-                direction=getDirection();
+                if(isMainPlayer) direction=getDirection();
                 switch (direction){
                     case UP:
                         region = bowGirlRunUp.getKeyFrame(stateTimer,true);
@@ -220,5 +255,21 @@ public class Player extends Sprite {
         else if(v.x<0 && v.y>0) return Direction.UP_LEFT;
         else if(v.x<0 && v.y<0) return Direction.DOWN_LEFT;
         else return Direction.DOWN;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getName(){
+        return name;
+    }
+
+    public HashMap<String,Object> getMap(){
+        HashMap<String,Object> map = new HashMap<>();
+        map.put("direction",this.direction);
+        map.put("posX",b2Body.getPosition().x);
+        map.put("posY",b2Body.getPosition().y);
+        map.put("state",this.currentState);
+        return map;
     }
 }

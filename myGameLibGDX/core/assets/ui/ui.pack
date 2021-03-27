@@ -1,0 +1,12 @@
+
+ui.png
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+textField
+  rotate: false
+  xy: 0, 0
+  size: 832, 100
+  orig: 832, 100
+  offset: 0, 0
+  index: -1

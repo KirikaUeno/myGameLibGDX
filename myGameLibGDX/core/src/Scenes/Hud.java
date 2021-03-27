@@ -1,6 +1,6 @@
 package Scenes;
 
-import Game.PlayField;
+import Game.Game;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -17,7 +17,7 @@ public class Hud implements Disposable {
     public Label fpsLabel;
 
     public Hud(SpriteBatch sb){
-        Viewport hudPort = new FitViewport(PlayField.V_WIDTH, PlayField.V_HEIGHT, new OrthographicCamera());
+        Viewport hudPort = new FitViewport(Game.V_WIDTH, Game.V_HEIGHT, new OrthographicCamera());
         stage = new Stage(hudPort,sb);
 
         Table table = new Table();

@@ -1,6 +1,6 @@
 package Screens;
 
-import Game.PlayField;
+import Game.Game;
 import Objects2d.PolygonalCollision;
 import Objects2d.RectCollision;
 import Scenes.Hud;
@@ -21,9 +21,15 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.google.cloud.firestore.DocumentSnapshot;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 public class PlayScreen implements Screen {
-    private final PlayField game;
+    private final Game game;
     private final OrthographicCamera camera;
     private final Viewport gamePort;
     private final Hud hud;
@@ -32,29 +38,32 @@ public class PlayScreen implements Screen {
     private final OrthogonalTiledMapRenderer renderer;
 
     public int frameRate = 0;
+    public int updateCount = 0;
     //physics world
     private final World world;
     private final Box2DDebugRenderer b2dr;
     private final Player player;
+    private ArrayList<Player> otherPlayers = new ArrayList<>();
+    private ArrayList<String> otherPlayersNames = new ArrayList<>();
 
     //textures
     private final TextureAtlas atlas;
 
-    public PlayScreen(PlayField game){
+    public PlayScreen(Game game, String playerName) throws ExecutionException, InterruptedException {
         this.game = game;
         atlas = new TextureAtlas("characters/bowGirl/bow-girl-movement.pack");
         //camera and gamePort for whole world
         camera = new OrthographicCamera();
-        gamePort = new FitViewport(((float)PlayField.V_WIDTH)/PlayField.PPM, ((float)PlayField.V_HEIGHT)/PlayField.PPM,camera);
-        this.resize(PlayField.V_WIDTH,PlayField.V_HEIGHT);
+        gamePort = new FitViewport(((float) Game.V_WIDTH)/ Game.PPM, ((float) Game.V_HEIGHT)/ Game.PPM,camera);
+        this.resize(Game.V_WIDTH, Game.V_HEIGHT);
         //hud
         hud = new Hud(game.batch);
         //map
         TmxMapLoader mapLoader = new TmxMapLoader();
         map = mapLoader.load("maps/castleMap.tmx");
-        renderer = new OrthogonalTiledMapRenderer(map,1.0f/PlayField.PPM);
+        renderer = new OrthogonalTiledMapRenderer(map,1.0f/ Game.PPM);
         //set camera to center of map
-        camera.position.set(map.getProperties().get("width", Integer.class)*16f/PlayField.PPM,map.getProperties().get("height", Integer.class)*16f/PlayField.PPM,0);
+        camera.position.set(map.getProperties().get("width", Integer.class)*16f/ Game.PPM,map.getProperties().get("height", Integer.class)*16f/ Game.PPM,0);
         //physics world
         world = new World(new Vector2(0,0),true);
         b2dr = new Box2DDebugRenderer();
@@ -62,6 +71,25 @@ public class PlayScreen implements Screen {
         generateStaticCollisions();
 
         player = new Player(this);
+        player.setName(playerName);
+        Game.fS.collection("users").document(player.getName()).set(player.getMap());
+
+        DocumentSnapshot players = Game.fS.collection("servers").document("server").get().get();
+        ArrayList<String> playerNames = new ArrayList<>();
+        if (players.exists()) {
+            playerNames = (ArrayList<String>) players.getData().get("players");
+            for(String name: playerNames){
+                DocumentSnapshot tempPlayer = Game.fS.collection("users").document(name).get().get();
+                if(!name.equals(player.getName())) {
+                    otherPlayersNames.add(name);
+                    otherPlayers.add(new Player(this, (HashMap<String, Object>) Objects.requireNonNull(tempPlayer.getData())));
+                }
+            }
+            if(!playerNames.contains(player.getName())) playerNames.add(player.getName());
+            Game.fS.collection("servers").document("server").update("players",playerNames);
+        } else {
+            System.out.println("No such document!");
+        }
     }
 
     @Override
@@ -71,7 +99,11 @@ public class PlayScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        update(delta);
+        try {
+            update(delta);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
         Gdx.gl.glClearColor(0,0,0,1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         //tiledMap render
@@ -81,6 +113,9 @@ public class PlayScreen implements Screen {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
         player.draw(game.batch);
+        for(Player pl: otherPlayers){
+            pl.draw(game.batch);
+        }
         game.batch.end();
 
         layers = new int[]{2, 4};
@@ -122,14 +157,39 @@ public class PlayScreen implements Screen {
         b2dr.dispose();
     }
 
-    public void update(float dt){
+    public void update(float dt) throws ExecutionException, InterruptedException {
         handleInput(dt);
         playerCorrectMovement();
 
         world.step(1/60f,6,2);
 
+        //if server players list changed, change otherPlayers list; if some of users whose names are in server list
+        //changed, update their maps.
+        updateCount++;
+        if(updateCount==0){
+            DocumentSnapshot players = Game.fS.collection("servers").document("server").get().get();
+            ArrayList<String> playerNames = new ArrayList<>();
+            if (players.exists()) {
+                playerNames = (ArrayList<String>) players.getData().get("players");
+                for(String name: playerNames){
+                    DocumentSnapshot tempPlayer = Game.fS.collection("users").document(name).get().get();
+                    if(!name.equals(player.getName())){
+                        if(!otherPlayersNames.contains("name")) otherPlayers.add(new Player(this, (HashMap<String, Object>) Objects.requireNonNull(tempPlayer.getData())));
+                        else otherPlayers
+                    }
+                }
+                if(!playerNames.contains(player.getName())) playerNames.add(player.getName());
+                Game.fS.collection("servers").document("server").update("players",playerNames);
+            } else {
+                System.out.println("No such document!");
+            }
+        } else if(updateCount>=600) updateCount =0;
+
         playerRestrictFromBorders();
         player.update(dt);
+        for(Player pl: otherPlayers){
+            pl.update(dt);
+        }
         handleCamera();
 
         camera.update();
@@ -155,9 +215,14 @@ public class PlayScreen implements Screen {
         } else {
             player.velocity =5;
         }
-        if(Gdx.input.isTouched()){
+        if(Gdx.input.justTouched()){
             System.out.println(player.b2Body.getPosition());
+            sendMessage();
         }
+    }
+
+    private void sendMessage() {
+        //Game.fS.collection("users").document("UENO").update(player.getMap());
     }
 
     private void playerCorrectMovement(){
@@ -166,17 +231,17 @@ public class PlayScreen implements Screen {
     }
 
     private void playerRestrictFromBorders(){
-        player.b2Body.setTransform(Math.min(player.b2Body.getPosition().x,map.getProperties().get("width", Integer.class)*32f/PlayField.PPM-8/PlayField.PPM),
-                Math.min(player.b2Body.getPosition().y,map.getProperties().get("height", Integer.class)*32f/PlayField.PPM-16/PlayField.PPM),0);
-        player.b2Body.setTransform(Math.max(player.b2Body.getPosition().x,0+8/PlayField.PPM),
-                Math.max(player.b2Body.getPosition().y,0+16/PlayField.PPM),0);
+        player.b2Body.setTransform(Math.min(player.b2Body.getPosition().x,map.getProperties().get("width", Integer.class)*32f/ Game.PPM-8/ Game.PPM),
+                Math.min(player.b2Body.getPosition().y,map.getProperties().get("height", Integer.class)*32f/ Game.PPM-16/ Game.PPM),0);
+        player.b2Body.setTransform(Math.max(player.b2Body.getPosition().x,0+8/ Game.PPM),
+                Math.max(player.b2Body.getPosition().y,0+16/ Game.PPM),0);
     }
 
     private void handleCamera(){
         camera.position.x=player.b2Body.getPosition().x;
         camera.position.y=player.b2Body.getPosition().y;
-        camera.position.x=Math.min(camera.position.x,map.getProperties().get("width", Integer.class)*32f/PlayField.PPM-camera.viewportWidth/2);
-        camera.position.y=Math.min(camera.position.y,map.getProperties().get("height", Integer.class)*32f/PlayField.PPM-camera.viewportHeight/2);
+        camera.position.x=Math.min(camera.position.x,map.getProperties().get("width", Integer.class)*32f/ Game.PPM-camera.viewportWidth/2);
+        camera.position.y=Math.min(camera.position.y,map.getProperties().get("height", Integer.class)*32f/ Game.PPM-camera.viewportHeight/2);
         camera.position.x=Math.max(camera.position.x,0+camera.viewportWidth/2);
         camera.position.y=Math.max(camera.position.y,0+camera.viewportHeight/2);
     }
@@ -196,5 +261,9 @@ public class PlayScreen implements Screen {
 
     public TextureAtlas getAtlas() {
         return atlas;
+    }
+
+    public Player getPlayer(){
+        return this.player;
     }
 }
