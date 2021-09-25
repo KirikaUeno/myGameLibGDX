@@ -6,6 +6,4 @@ sourceSets.main.java.srcDirs = [ "src/" ]
 eclipse.project.name = appName + "-core"
 
 dependencies {
-    implementation 'com.google.firebase:firebase-admin:7.1.0'
-    implementation 'com.google.firebase:firebase-firestore:22.1.0'
 }

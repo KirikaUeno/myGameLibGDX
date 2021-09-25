@@ -39,7 +39,7 @@ public class WelcomeScreen implements Screen {
 
         UISprite ui = new UISprite(this);
 
-        Label.LabelStyle font = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
+        Label.LabelStyle font = new Label.LabelStyle(new BitmapFont(), Color.BLACK);
 
         TextureRegionDrawable cursor = new TextureRegionDrawable(ui.cursor);
         TextureRegionDrawable selection = new TextureRegionDrawable(ui.selection);
@@ -51,10 +51,20 @@ public class WelcomeScreen implements Screen {
         table.center();
         table.setFillParent(true);
 
+        final Label welcomeLabel = new Label("Welcome to the 'game by SanaFan', "+playerName+"!\nPress LKM",font);
+        nameInput = new TextField("", textFieldStyle);
+        //table.add(nameInput).expandX();
+        table.add(welcomeLabel).expandX();
+        welcomeLabel.setVisible(false);
+
+        stage.addActor(table);
+
         Gdx.input.getTextInput(new Input.TextInputListener() {
             @Override
             public void input(String text) {
                 playerName = text;
+                welcomeLabel.setText("Welcome to the 'game by SanaFan', "+playerName+"!\nPress LKM");
+                welcomeLabel.setVisible(true);
             }
 
             @Override
@@ -62,13 +72,6 @@ public class WelcomeScreen implements Screen {
 
             }
         },"Character name","","your nickname");
-
-        Label welcomeLabel = new Label("Welcome to the 'game by SanaFan', "+playerName+"!\nPress LKM",font);
-        nameInput = new TextField("", textFieldStyle);
-        //table.add(nameInput).expandX();
-        table.add(welcomeLabel).expandX();
-
-        stage.addActor(table);
     }
 
     @Override

@@ -21,7 +21,6 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.google.cloud.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +48,7 @@ public class PlayScreen implements Screen {
     //textures
     private final TextureAtlas atlas;
 
-    public PlayScreen(Game game, String playerName) throws ExecutionException, InterruptedException {
+    public PlayScreen(Game game, String playerName){
         this.game = game;
         atlas = new TextureAtlas("characters/bowGirl/bow-girl-movement.pack");
         //camera and gamePort for whole world
@@ -72,24 +71,7 @@ public class PlayScreen implements Screen {
 
         player = new Player(this);
         player.setName(playerName);
-        Game.fS.collection("users").document(player.getName()).set(player.getMap());
-
-        DocumentSnapshot players = Game.fS.collection("servers").document("server").get().get();
-        ArrayList<String> playerNames = new ArrayList<>();
-        if (players.exists()) {
-            playerNames = (ArrayList<String>) players.getData().get("players");
-            for(String name: playerNames){
-                DocumentSnapshot tempPlayer = Game.fS.collection("users").document(name).get().get();
-                if(!name.equals(player.getName())) {
-                    otherPlayersNames.add(name);
-                    otherPlayers.add(new Player(this, (HashMap<String, Object>) Objects.requireNonNull(tempPlayer.getData())));
-                }
-            }
-            if(!playerNames.contains(player.getName())) playerNames.add(player.getName());
-            Game.fS.collection("servers").document("server").update("players",playerNames);
-        } else {
-            System.out.println("No such document!");
-        }
+        //add player to player list
     }
 
     @Override
@@ -163,27 +145,7 @@ public class PlayScreen implements Screen {
 
         world.step(1/60f,6,2);
 
-        //if server players list changed, change otherPlayers list; if some of users whose names are in server list
-        //changed, update their maps.
-        updateCount++;
-        if(updateCount==0){
-            DocumentSnapshot players = Game.fS.collection("servers").document("server").get().get();
-            ArrayList<String> playerNames = new ArrayList<>();
-            if (players.exists()) {
-                playerNames = (ArrayList<String>) players.getData().get("players");
-                for(String name: playerNames){
-                    DocumentSnapshot tempPlayer = Game.fS.collection("users").document(name).get().get();
-                    if(!name.equals(player.getName())){
-                        if(!otherPlayersNames.contains("name")) otherPlayers.add(new Player(this, (HashMap<String, Object>) Objects.requireNonNull(tempPlayer.getData())));
-                        else otherPlayers
-                    }
-                }
-                if(!playerNames.contains(player.getName())) playerNames.add(player.getName());
-                Game.fS.collection("servers").document("server").update("players",playerNames);
-            } else {
-                System.out.println("No such document!");
-            }
-        } else if(updateCount>=600) updateCount =0;
+        //update players list
 
         playerRestrictFromBorders();
         player.update(dt);
