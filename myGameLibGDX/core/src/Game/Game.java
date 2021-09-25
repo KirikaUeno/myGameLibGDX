@@ -2,7 +2,6 @@ package Game;
 
 import Screens.PlayScreen;
 import Screens.WelcomeScreen;
-import Sprites.Player;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -16,7 +15,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 public class Game extends com.badlogic.gdx.Game{

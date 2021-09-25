@@ -1,10 +1,10 @@
 package Objects2d;
 
-import Game.Game;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.physics.box2d.*;
+import Game.Game;
 
 public class RectCollision {
     public RectCollision(MapObject object, World world){

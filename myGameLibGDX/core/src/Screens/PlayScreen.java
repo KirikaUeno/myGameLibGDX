@@ -175,7 +175,7 @@ public class PlayScreen implements Screen {
                     DocumentSnapshot tempPlayer = Game.fS.collection("users").document(name).get().get();
                     if(!name.equals(player.getName())){
                         if(!otherPlayersNames.contains("name")) otherPlayers.add(new Player(this, (HashMap<String, Object>) Objects.requireNonNull(tempPlayer.getData())));
-                        else otherPlayers
+                        //else otherPlayers
                     }
                 }
                 if(!playerNames.contains(player.getName())) playerNames.add(player.getName());

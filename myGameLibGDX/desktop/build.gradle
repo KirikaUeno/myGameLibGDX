@@ -33,6 +33,7 @@ task dist(type: Jar) {
     with jar
 }
 
+
 dist.dependsOn classes
 
 eclipse.project.name = appName + "-desktop"
