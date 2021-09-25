@@ -22,6 +22,11 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
@@ -71,7 +76,20 @@ public class PlayScreen implements Screen {
 
         player = new Player(this);
         player.setName(playerName);
-        //add player to player list
+        //add player to players list
+        Process process;
+        String[] cmd = {"curl","localhost:8080/addplayer?name="+playerName};
+        try {
+            process = Runtime.getRuntime().exec(cmd);
+            InputStream stdout = process.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(stdout, StandardCharsets.UTF_8));
+            String line1;
+            while ((line1 = reader.readLine()) != null) {
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

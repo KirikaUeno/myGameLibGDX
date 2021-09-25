@@ -5,9 +5,8 @@ import Screens.WelcomeScreen;
 import Sprites.Player;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
@@ -35,6 +34,19 @@ public class Game extends com.badlogic.gdx.Game{
 	@Override
 	public void dispose () {
 		//remove player from the list
+		Process process;
+		String[] cmd = {"curl","localhost:8080/removeplayer?name="+playScreen.getPlayer().getName()};
+		try {
+			process = Runtime.getRuntime().exec(cmd);
+			InputStream stdout = process.getInputStream();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(stdout, StandardCharsets.UTF_8));
+			String line1;
+			while ((line1 = reader.readLine()) != null) {
+
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		batch.dispose();
 	}
 
