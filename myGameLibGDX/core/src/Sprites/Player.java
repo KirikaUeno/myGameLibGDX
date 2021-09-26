@@ -60,7 +60,7 @@ public class Player extends Sprite {
         setBounds(0,0,16/ Game.PPM,32/ Game.PPM);
     }
 
-    public Player(PlayScreen screen, HashMap<String,Object> map){
+    public Player(PlayScreen screen, HashMap<String,String> map){
         super(screen.getAtlas().findRegion("bowGirl"));
         this.world = screen.getWorld();
         definePlayer();
@@ -68,12 +68,10 @@ public class Player extends Sprite {
         stateTimer = 0;
         isLeft=true;
 
-        direction = Direction.valueOf((String)map.get("direction"));
-        b2Body.setTransform(Float.parseFloat((String)map.get("posX")),Float.parseFloat((String)map.get("posY")),0);
-        System.out.println((String)map.get("posX"));
-        System.out.println((String)map.get("posY"));
-        System.out.println(b2Body.getPosition().toString());
-        currentState = State.valueOf((String)map.get("state"));
+        name = map.get("name");
+        direction = Direction.valueOf(map.get("direction"));
+        b2Body.setTransform(Float.parseFloat(map.get("posX")),Float.parseFloat(map.get("posY")),0);
+        currentState = State.valueOf(map.get("state"));
         previousState = currentState;
         previousDirection = direction;
         if(direction==Direction.DOWN_RIGHT||direction==Direction.UP_RIGHT||direction==Direction.RIGHT) isLeft=false;
@@ -271,5 +269,15 @@ public class Player extends Sprite {
         map.put("posY",b2Body.getPosition().y);
         map.put("state",this.currentState);
         return map;
+    }
+
+    public String getInfo(){
+        return "direction="+this.direction+"&posX="+b2Body.getPosition().x+"&posY="+b2Body.getPosition().y+"&state="+this.currentState;
+    }
+
+    public void updateByMap(HashMap<String, String> map){
+        direction = Direction.valueOf(map.get("direction"));
+        b2Body.setTransform(Float.parseFloat(map.get("posX")),Float.parseFloat(map.get("posY")),0);
+        currentState = State.valueOf(map.get("state"));
     }
 }

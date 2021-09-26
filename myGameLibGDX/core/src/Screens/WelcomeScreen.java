@@ -20,6 +20,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 public class WelcomeScreen implements Screen {
@@ -96,7 +97,12 @@ public class WelcomeScreen implements Screen {
         if(Gdx.input.justTouched()){
             if(!(playerName.equals(""))) {
                 System.out.println("starting the game!\nyour name: " + playerName);
-                PlayScreen screen = new PlayScreen(game,playerName);
+                PlayScreen screen = null;
+                try {
+                    screen = new PlayScreen(game,playerName);
+                } catch (IOException e) {
+                    System.out.println("no server connection!");
+                }
                 game.setPlayScreen(screen);
                 game.setScreen(screen);
             }else{

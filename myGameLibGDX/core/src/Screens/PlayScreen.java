@@ -26,8 +26,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -53,7 +56,11 @@ public class PlayScreen implements Screen {
     //textures
     private final TextureAtlas atlas;
 
-    public PlayScreen(Game game, String playerName){
+    //net
+    private URL getInfo = new URL("http://localhost:8080/getinfo");
+    private InputStream getInfoOut = getInfo.openStream();
+
+    public PlayScreen(Game game, String playerName) throws IOException {
         this.game = game;
         atlas = new TextureAtlas("characters/bowGirl/bow-girl-movement.pack");
         //camera and gamePort for whole world
@@ -163,10 +170,49 @@ public class PlayScreen implements Screen {
 
         world.step(1/60f,6,2);
 
-        //update players list
-
         playerRestrictFromBorders();
         player.update(dt);
+
+        if(updateCount<30) updateCount++;
+        else{
+            String[] cmd = {"curl", "localhost:8080/sendinfo?name=" + player.getName() + "&" + player.getInfo()};
+            try {
+                Runtime.getRuntime().exec(cmd);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                URL getInfo = new URL("http://localhost:8080/getinfo");
+                InputStream getInfoOut = getInfo.openStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(getInfoOut));
+                String line;
+                ArrayList<String> serverPlayers = new ArrayList<>();
+                while ((line = reader.readLine()) != null) {
+                    HashMap<String,String> map = new HashMap<>();
+                    String[] parameters = line.split(";");
+                    for(String param: parameters){
+                        String[] parts = param.split(":");
+                        map.put(parts[0],parts[1]);
+                    }
+                    serverPlayers.add(map.get("name"));
+                    if(otherPlayersNames.contains(map.get("name"))) getPlayer().updateByMap(map);
+                    else if(!map.get("name").equals(player.getName())){
+                        otherPlayersNames.add(map.get("name"));
+                        otherPlayers.add(new Player(this, map));
+                    }
+                }
+                for(int i = otherPlayersNames.size()-1; i>0;i--){
+                    if(!serverPlayers.contains(otherPlayersNames.get(i))){
+                        otherPlayersNames.remove(i);
+                        otherPlayers.remove(i);
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("can't read info from server");
+            }
+            updateCount = 0;
+        }
+
         for(Player pl: otherPlayers){
             pl.update(dt);
         }
@@ -194,10 +240,6 @@ public class PlayScreen implements Screen {
             player.velocity =10;
         } else {
             player.velocity =5;
-        }
-        if(Gdx.input.justTouched()){
-            System.out.println(player.b2Body.getPosition());
-            sendMessage();
         }
     }
 
@@ -245,5 +287,12 @@ public class PlayScreen implements Screen {
 
     public Player getPlayer(){
         return this.player;
+    }
+
+    private Player getPlayer(String name){
+        for(Player p: otherPlayers){
+            if(p.getName().equals(name)) return p;
+        }
+        return null;
     }
 }
